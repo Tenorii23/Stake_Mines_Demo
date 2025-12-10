@@ -7,7 +7,7 @@ const CONFIG = {
   houseEdge: 0.01,
   RTP: 0.99,
   minBet: 0.10,
-  maxBet: 1000.00
+  maxBet: 10000.00 // Increased max bet
 };
 
 const sounds = {
@@ -81,7 +81,7 @@ const state = {
   minesIndices: new Set(),
   revealedSafe: 0,
   betAmount: CONFIG.defaultBet,
-  lockedBetAmount: CONFIG.defaultBet, // Stores bet amount when round starts
+  lockedBetAmount: CONFIG.defaultBet,
   minesCount: CONFIG.defaultMines,
   cashoutMultiplier: 1.00,
   roundHistory: [],
@@ -360,33 +360,27 @@ function resetTilesForRound() {
 // ==================== BET AMOUNT CONTROL ====================
 
 function lockBetControls() {
-  // Disable bet input
   betInput.disabled = true;
   betInput.classList.add('disabled');
   
-  // Disable bet action buttons
   betActionButtons.forEach(btn => {
     btn.disabled = true;
     btn.classList.add('disabled');
   });
   
-  // Disable mines select
   minesSelect.disabled = true;
   minesSelect.classList.add('disabled');
 }
 
 function unlockBetControls() {
-  // Enable bet input
   betInput.disabled = false;
   betInput.classList.remove('disabled');
   
-  // Enable bet action buttons
   betActionButtons.forEach(btn => {
     btn.disabled = false;
     btn.classList.remove('disabled');
   });
   
-  // Enable mines select
   minesSelect.disabled = false;
   minesSelect.classList.remove('disabled');
 }
@@ -401,11 +395,6 @@ function startRound() {
     return;
   }
   
-  if (bet > CONFIG.maxBet) {
-    showNotification(`Maximum bet is $${CONFIG.maxBet}`, 'warning');
-    return;
-  }
-  
   if (bet > state.balance) {
     showNotification('Insufficient balance', 'error');
     return;
@@ -417,19 +406,18 @@ function startRound() {
   state.minesIndices = new Set();
   state.currentRoundId = Date.now();
   state.canCashout = false;
-  state.lockedBetAmount = bet; // Lock the bet amount for this round
+  state.lockedBetAmount = bet;
   
   betBtn.textContent = "Cashout";
   betBtn.disabled = true;
   betBtn.classList.add('disabled');
   randomBtn.disabled = false;
   
-  // Lock bet controls during round
   lockBetControls();
   
   resetTilesForRound();
   
-  // Place mines randomly
+  // Place mines randomly - FIXED: Store positions properly
   const totalTiles = CONFIG.gridSize * CONFIG.gridSize;
   const availableIndices = Array.from({ length: totalTiles }, (_, i) => i);
   
@@ -440,6 +428,9 @@ function startRound() {
   }
   
   state.minesIndices = new Set(availableIndices.slice(0, state.minesCount));
+  
+  // DEBUG: Log mine positions (remove in production)
+  console.log("Mine positions:", Array.from(state.minesIndices));
   
   // Deduct bet and update stats
   state.balance -= bet;
@@ -468,7 +459,6 @@ function endRound(win, reason = '') {
   betBtn.classList.remove('disabled');
   randomBtn.disabled = true;
   
-  // Unlock bet controls after round ends
   unlockBetControls();
   
   state.tiles.forEach(t => {
@@ -538,7 +528,7 @@ function handleTileClick(index) {
     
     setTimeout(() => revealAllMines(index), 100);
     
-    // Update stats - use locked bet amount
+    // Update stats
     state.stats.losses += 1;
     const lossAmount = state.lockedBetAmount;
     state.stats.profit -= lossAmount;
@@ -585,7 +575,7 @@ function handleTileClick(index) {
     const currentMultiplier = calculateMultiplier();
     const probability = calculateNextSafeProbability() * 100;
     
-    // Update profit display - use locked bet amount
+    // Update profit display
     let riskColor;
     if (probability >= 70) riskColor = '#00C74D';
     else if (probability >= 50) riskColor = '#F5A623';
@@ -607,10 +597,14 @@ function handleTileClick(index) {
       time: Date.now()
     });
     
-    // Check if all safe tiles have been revealed
+    // FIXED: Check if all safe tiles have been revealed and auto-cashout
     const totalSafeTiles = (CONFIG.gridSize * CONFIG.gridSize) - state.minesCount;
     if (state.revealedSafe >= totalSafeTiles) {
-      cashout(true, 'All gems found!');
+      setTimeout(() => {
+        if (state.inRound) {
+          cashout(true, 'All gems found!');
+        }
+      }, 500);
     }
   }
 }
@@ -620,28 +614,38 @@ function randomPick() {
   
   playSound("click");
   const totalTiles = CONFIG.gridSize * CONFIG.gridSize;
-  const safeIndices = [];
+  const unrevealedIndices = [];
   
-  // Find all unrevealed safe tiles
+  // Find ALL unrevealed tiles (including mines)
   for (let i = 0; i < totalTiles; i++) {
-    if (state.minesIndices.has(i)) continue;
     const tile = state.tiles[i];
-    if (tile.classList.contains("revealed-safe")) continue;
-    safeIndices.push(i);
+    if (tile.classList.contains("revealed-safe") || tile.classList.contains("revealed-mine")) {
+      continue;
+    }
+    unrevealedIndices.push(i);
   }
   
-  if (safeIndices.length === 0) {
-    showNotification('No safe tiles left to pick!', 'warning');
+  if (unrevealedIndices.length === 0) {
+    showNotification('No tiles left to pick!', 'warning');
     return;
   }
   
-  const picks = Math.min(3, safeIndices.length);
-  const shuffled = [...safeIndices].sort(() => Math.random() - 0.5);
+  // Pick 3 RANDOM tiles (could be mines or gems)
+  const picks = Math.min(3, unrevealedIndices.length);
   
-  showNotification(`Randomly picking ${picks} tiles...`, 'info', 2000);
+  // Shuffle all unrevealed indices
+  const shuffled = [...unrevealedIndices].sort(() => Math.random() - 0.5);
   
-  shuffled.slice(0, picks).forEach((idx, i) => {
-    setTimeout(() => handleTileClick(idx), i * 300);
+  showNotification(`Randomly picking ${picks} tiles (risky!)`, 'warning', 2000);
+  
+  // Pick tiles with risk
+  let pickedIndices = shuffled.slice(0, picks);
+  
+  // Process picks sequentially
+  pickedIndices.forEach((idx, i) => {
+    setTimeout(() => {
+      handleTileClick(idx);
+    }, i * 400);
   });
 }
 
@@ -654,7 +658,7 @@ function updateProfitPreview() {
   }
   
   const multiplier = calculateMultiplier();
-  const payout = state.lockedBetAmount * multiplier; // Use locked bet amount
+  const payout = state.lockedBetAmount * multiplier;
   const probability = calculateNextSafeProbability() * 100;
   
   let riskColor;
@@ -676,7 +680,7 @@ function cashout(auto = false, reason = '') {
   }
   
   const multiplier = calculateMultiplier();
-  const payout = state.lockedBetAmount * multiplier; // Use locked bet amount
+  const payout = state.lockedBetAmount * multiplier;
   const profit = payout - state.lockedBetAmount;
   
   // Add payout to balance
@@ -732,15 +736,12 @@ function updateAdvancedStats() {
   const totalGames = state.stats.wins + state.stats.losses;
   const winRate = totalGames > 0 ? (state.stats.wins / totalGames * 100).toFixed(1) : '0.0';
   
-  // Calculate session time
   const sessionTime = Date.now() - state.stats.sessionStartTime;
   const hours = Math.floor(sessionTime / (1000 * 60 * 60));
   const minutes = Math.floor((sessionTime % (1000 * 60 * 60)) / (1000 * 60));
   
-  // Calculate average bet
   const avgBet = totalGames > 0 ? state.stats.wagered / totalGames : 0;
   
-  // Calculate expected value
   const expectedValue = calculateExpectedValue();
   
   statsAdvancedContainer.innerHTML = `
@@ -803,7 +804,6 @@ function drawStatsChart() {
   
   ctx.clearRect(0, 0, w, h);
   
-  // Fill background
   ctx.fillStyle = "#0F212E";
   ctx.fillRect(0, 0, w, h);
   
@@ -816,7 +816,6 @@ function drawStatsChart() {
     return;
   }
   
-  // Calculate chart bounds
   const minVal = Math.min(0, ...values);
   const maxVal = Math.max(0, ...values);
   const range = maxVal - minVal || 1;
@@ -824,7 +823,6 @@ function drawStatsChart() {
   const usableW = w - pad * 2;
   const usableH = h - pad * 2;
   
-  // Draw zero line
   const zeroY = pad + (1 - (0 - minVal) / range) * usableH;
   ctx.beginPath();
   ctx.moveTo(pad, zeroY);
@@ -835,7 +833,6 @@ function drawStatsChart() {
   ctx.stroke();
   ctx.setLineDash([]);
   
-  // Draw profit line
   ctx.beginPath();
   values.forEach((v, i) => {
     const x = pad + (i / Math.max(values.length - 1, 1)) * usableW;
@@ -850,7 +847,6 @@ function drawStatsChart() {
   ctx.lineWidth = 2;
   ctx.stroke();
   
-  // Fill area under the line
   ctx.beginPath();
   values.forEach((v, i) => {
     const x = pad + (i / Math.max(values.length - 1, 1)) * usableW;
@@ -873,7 +869,6 @@ function drawStatsChart() {
   ctx.fillStyle = grad;
   ctx.fill();
   
-  // Add current value label
   if (values.length > 0) {
     ctx.fillStyle = up ? "#00C74D" : "#FF4141";
     ctx.font = "bold 10px system-ui";
@@ -886,7 +881,6 @@ function drawStatsChart() {
 
 function onBetInputChange() {
   if (state.inRound) {
-    // Don't allow changing bet during a round
     betInput.value = formatMoney(state.lockedBetAmount);
     showNotification('Cannot change bet during a round', 'warning');
     return;
@@ -896,9 +890,6 @@ function onBetInputChange() {
   if (isNaN(v) || v < CONFIG.minBet) {
     state.betAmount = CONFIG.minBet;
     betInput.value = CONFIG.minBet.toFixed(2);
-  } else if (v > CONFIG.maxBet) {
-    state.betAmount = CONFIG.maxBet;
-    betInput.value = CONFIG.maxBet.toFixed(2);
   } else if (v > state.balance) {
     state.betAmount = Math.min(state.balance, CONFIG.maxBet);
     betInput.value = formatMoney(state.betAmount);
@@ -925,7 +916,6 @@ function attachEvents() {
   
   minesSelect.addEventListener("change", () => {
     if (state.inRound) {
-      // Don't allow changing mines during a round
       minesSelect.value = state.minesCount;
       showNotification('Cannot change mines during a round', 'warning');
       return;
@@ -1026,7 +1016,6 @@ function attachEvents() {
     e.stopPropagation();
   });
   
-  // Stats panel functionality
   statsClose.addEventListener("click", () => {
     playSound("click");
     statsPanel.classList.add("hidden");
@@ -1171,7 +1160,6 @@ function init() {
     margin-top: 2px;
   }
   
-  /* Disabled input styling */
   #bet-input.disabled,
   .select-input.disabled {
     opacity: 0.5;
