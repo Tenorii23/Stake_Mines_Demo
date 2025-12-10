@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mines Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-root">
+    <header class="top-nav">
+      <div class="top-nav-left">
+        <div class="brand-logo">Mines</div>
+      </div>
+      <div class="top-nav-center">
+        <div class="balance-pill">
+          <span class="balance-currency">$</span>
+          <span id="balance-amount">200.00</span>
+        </div>
+        <button id="add-money-btn" class="add-btn">Add</button>
+        <div id="add-money-popup" class="add-popup hidden">
+          <div class="add-popup-title">Add money</div>
+          <div class="add-popup-row">
+            <button class="add-popup-btn" data-add="100">+$100</button>
+            <button class="add-popup-btn" data-add="500">+$500</button>
+            <button class="add-popup-btn" data-add="1000">+$1000</button>
+          </div>
+          <div class="add-popup-row custom-row">
+            <input id="add-custom-input" type="number" min="0" step="0.01" placeholder="Custom" />
+            <button id="add-custom-btn" class="add-popup-btn full">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="top-nav-right"></div>
+    </header>
+
+    <main class="main-layout">
+      <section class="panel panel-left">
+        <div class="panel-header-tabs">
+          <button class="tab-btn active" data-tab="manual">Manual</button>
+          <button class="tab-btn" data-tab="auto">Auto</button>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <div class="label-row">
+              <span>Bet Amount</span>
+              <span class="label-secondary" id="bet-preview">$0.00</span>
+            </div>
+            <div class="bet-row">
+              <div class="bet-input-wrap">
+                <span class="bet-currency">$</span>
+                <input id="bet-input" type="number" min="0" step="0.01" value="1.00" />
+              </div>
+              <div class="bet-shortcuts">
+                <button class="btn mini dark" data-bet-action="half">½</button>
+                <button class="btn mini dark" data-bet-action="double">2×</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="label-row"><span>Mines</span></label>
+            <select id="mines-select" class="select-input"></select>
+          </div>
+
+          <div class="form-group">
+            <label class="label-row"><span>Gems</span></label>
+            <input id="gems-display" class="text-input readonly" type="text" value="22" readonly />
+          </div>
+
+          <div class="form-group">
+            <button id="bet-btn" class="btn primary large">Bet</button>
+          </div>
+
+          <div class="form-group">
+            <button id="random-btn" class="btn secondary large" disabled>Random Pick</button>
+          </div>
+
+          <div class="form-group total-profit-group">
+            <div class="total-profit-header">
+              <span id="profit-label">Total Profit (1.00x)</span>
+              <span id="profit-amount">$0.00</span>
+            </div>
+          </div>
+
+          <div id="auto-info" class="auto-info hidden">
+            Auto mode is visual only in this demo.
+          </div>
+        </div>
+        <footer class="panel-footer">
+          <div class="footer-text">Demo only – no real money.</div>
+        </footer>
+      </section>
+
+      <section class="panel panel-center">
+        <div id="grid" class="grid-wrapper"></div>
+      </section>
+
+      <aside id="stats-panel" class="panel panel-right">
+        <header class="stats-header">
+          <div class="stats-left">
+            <span class="stats-icon">📈</span>
+            <span>Live Stats</span>
+          </div>
+          <div class="stats-right">
+            <button id="stats-refresh" class="icon-btn">⟳</button>
+            <button id="stats-close" class="icon-btn">✕</button>
+          </div>
+        </header>
+        <div class="panel-body stats-body">
+          <div class="stats-cards">
+            <div class="stats-card">
+              <div class="stats-label">Profit</div>
+              <div id="stats-profit" class="stats-value positive">$0.00</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-label">Wagered</div>
+              <div id="stats-wagered" class="stats-value">$0.00</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-label">Wins</div>
+              <div id="stats-wins" class="stats-value">0</div>
+              <div class="stats-sub">Losses <span id="stats-losses">0</span></div>
+            </div>
+          </div>
+          <div class="stats-chart-card">
+            <div class="stats-chart-header">Profit History</div>
+            <canvas id="stats-chart" width="260" height="120"></canvas>
+          </div>
+        </div>
+      </aside>
+
+      <button id="stats-open" class="stats-open-btn hidden">Live Stats</button>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
