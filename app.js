@@ -103,14 +103,14 @@ menuPanel.innerHTML = `
   </div>
   <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
 </div>
-    <div class="game-card" data-game="crash">
-      <div class="game-icon">🚀</div>
-      <div class="game-info">
-        <h4>Crash</h4>
-        <p>Cash out before it crashes</p>
-      </div>
-      <div class="game-badge">Coming Soon</div>
-    </div>
+<div class="game-card" data-game="crash">
+  <div class="game-icon">🚀</div>
+  <div class="game-info">
+    <h4>Crash</h4>
+    <p>Cash out before it crashes</p>
+  </div>
+  <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
+</div>
     <div class="game-card" data-game="dice">
       <div class="game-icon">🎲</div>
       <div class="game-info">
@@ -1079,6 +1079,14 @@ document.querySelectorAll('.game-card').forEach(card => {
     if (game === 'plinko') {
       // Open Plinko in new tab
       window.open('https://plinko-web-game.netlify.app/', '_blank');
+      return;
+    }
+
+
+
+        if (game === 'crash') {
+      // Open Plinko in new tab
+      window.open('https://tenorii23.github.io/Stake_Crash_Demo/', '_blank');
       return;
     }
     
