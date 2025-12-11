@@ -7,7 +7,7 @@ const CONFIG = {
   houseEdge: 0.01,
   RTP: 0.99,
   minBet: 0.10,
-  maxBet: 10000.00 // Increased max bet
+  maxBet: 10000.00
 };
 
 const sounds = {
@@ -73,6 +73,117 @@ const statsAdvancedContainer = document.createElement("div");
 statsAdvancedContainer.className = "stats-advanced";
 document.querySelector('.stats-body').appendChild(statsAdvancedContainer);
 
+// Create menu button and panel
+const menuBtn = document.createElement("button");
+menuBtn.className = "menu-btn";
+menuBtn.innerHTML = "🎮 Menu";
+document.querySelector('.top-nav-left').appendChild(menuBtn);
+
+const menuPanel = document.createElement("div");
+menuPanel.className = "menu-panel hidden";
+menuPanel.innerHTML = `
+  <div class="menu-header">
+    <h3>Demo Games</h3>
+    <button class="menu-close">&times;</button>
+  </div>
+  <div class="menu-games">
+    <div class="game-card" data-game="mines" data-active="true">
+      <div class="game-icon">💣</div>
+      <div class="game-info">
+        <h4>Mines</h4>
+        <p>Find gems, avoid mines</p>
+      </div>
+      <div class="game-badge active">Playing</div>
+    </div>
+<div class="game-card" data-game="plinko">
+  <div class="game-icon">🎯</div>
+  <div class="game-info">
+    <h4>Plinko</h4>
+    <p>Drop balls for multipliers</p>
+  </div>
+  <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
+</div>
+    <div class="game-card" data-game="crash">
+      <div class="game-icon">🚀</div>
+      <div class="game-info">
+        <h4>Crash</h4>
+        <p>Cash out before it crashes</p>
+      </div>
+      <div class="game-badge">Coming Soon</div>
+    </div>
+    <div class="game-card" data-game="dice">
+      <div class="game-icon">🎲</div>
+      <div class="game-info">
+        <h4>Dice</h4>
+        <p>Predict dice rolls</p>
+      </div>
+      <div class="game-badge">Coming Soon</div>
+    </div>
+    <div class="game-card" data-game="roulette">
+      <div class="game-icon">🎡</div>
+      <div class="game-info">
+        <h4>Roulette</h4>
+        <p>Classic wheel betting</p>
+      </div>
+      <div class="game-badge">Coming Soon</div>
+    </div>
+    <div class="game-card" data-game="blackjack">
+      <div class="game-icon">♠️</div>
+      <div class="game-info">
+        <h4>Blackjack</h4>
+        <p>Beat the dealer</p>
+      </div>
+      <div class="game-badge">Coming Soon</div>
+    </div>
+  </div>
+  <div class="menu-footer">
+    <button class="btn dark small" id="toggle-sounds">🔇 Sounds Off</button>
+    <button class="btn dark small" id="reset-stats">Reset Stats</button>
+  </div>
+`;
+document.body.appendChild(menuPanel);
+
+// Create quick bet buttons
+const quickBetContainer = document.createElement("div");
+quickBetContainer.className = "quick-bets";
+quickBetContainer.innerHTML = `
+  <div class="quick-bets-label">Quick Bets</div>
+  <div class="quick-bets-buttons">
+    <button class="quick-bet-btn" data-bet="0.10">$0.10</button>
+    <button class="quick-bet-btn" data-bet="0.50">$0.50</button>
+    <button class="quick-bet-btn" data-bet="1.00">$1.00</button>
+    <button class="quick-bet-btn" data-bet="5.00">$5.00</button>
+    <button class="quick-bet-btn" data-bet="10.00">$10.00</button>
+  </div>
+`;
+document.querySelector('.panel-left .panel-body').insertBefore(quickBetContainer, document.querySelector('.form-group:nth-child(3)'));
+
+// Create hotkeys info
+const hotkeysInfo = document.createElement("div");
+hotkeysInfo.className = "hotkeys-info";
+hotkeysInfo.innerHTML = `
+  <div class="hotkeys-title">Hotkeys</div>
+  <div class="hotkeys-grid">
+    <div class="hotkey-item">
+      <kbd>Space</kbd>
+      <span>Start/Cashout</span>
+    </div>
+    <div class="hotkey-item">
+      <kbd>R</kbd>
+      <span>Random Pick</span>
+    </div>
+    <div class="hotkey-item">
+      <kbd>½</kbd>/<kbd>2×</kbd>
+      <span>Bet Actions</span>
+    </div>
+    <div class="hotkey-item">
+      <kbd>M</kbd>
+      <span>Toggle Menu</span>
+    </div>
+  </div>
+`;
+document.querySelector('.panel-footer').insertBefore(hotkeysInfo, document.querySelector('.footer-text'));
+
 // Game state
 const state = {
   balance: CONFIG.startingBalance,
@@ -87,6 +198,8 @@ const state = {
   roundHistory: [],
   currentRoundId: 0,
   canCashout: false,
+  soundsEnabled: true,
+  hotkeysEnabled: true,
   stats: {
     profit: 0,
     wagered: 0,
@@ -100,7 +213,9 @@ const state = {
     biggestWin: 0,
     biggestLoss: 0,
     totalPlayTime: 0,
-    sessionStartTime: Date.now()
+    sessionStartTime: Date.now(),
+    fastestCashout: null,
+    highestRiskWin: 0
   }
 };
 
@@ -141,96 +256,6 @@ function getNotificationIcon(type) {
   }
 }
 
-// Add notification CSS
-const notificationCSS = `
-.notification-container {
-  position: fixed;
-  top: 80px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 350px;
-}
-
-.notification {
-  background: #132439;
-  border: 1px solid #1A2C3D;
-  border-radius: 6px;
-  padding: 12px 15px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  transform: translateX(120%);
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  overflow: hidden;
-}
-
-.notification.show {
-  transform: translateX(0);
-}
-
-.notification-icon {
-  font-size: 18px;
-  font-weight: bold;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.notification-success .notification-icon {
-  background: rgba(0, 199, 77, 0.15);
-  color: #00C74D;
-}
-
-.notification-warning .notification-icon {
-  background: rgba(245, 166, 35, 0.15);
-  color: #F5A623;
-}
-
-.notification-error .notification-icon {
-  background: rgba(255, 65, 65, 0.15);
-  color: #FF4141;
-}
-
-.notification-info .notification-icon {
-  background: rgba(167, 179, 195, 0.15);
-  color: #A7B3C3;
-}
-
-.notification-content {
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #FFFFFF;
-}
-
-.notification-close {
-  background: transparent;
-  border: none;
-  color: #A7B3C3;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.notification-close:hover {
-  color: #FFFFFF;
-}
-`;
-
 // ==================== CORE MATH FUNCTIONS ====================
 
 function calculateMultiplier() {
@@ -249,8 +274,14 @@ function calculateMultiplier() {
   }
   
   const probabilitySafe = remainingSafeTiles / totalRemainingTiles;
-  const fairMultiplier = 1 / probabilitySafe;
   
+  // Special case for 1 mine (higher multipliers)
+  if (state.minesCount === 1) {
+    const baseMultiplier = 1 / probabilitySafe;
+    return Math.max(1.00, baseMultiplier * CONFIG.RTP);
+  }
+  
+  const fairMultiplier = 1 / probabilitySafe;
   return Math.max(1.00, fairMultiplier * CONFIG.RTP);
 }
 
@@ -268,6 +299,15 @@ function calculateExpectedValue() {
   const multiplier = calculateMultiplier();
   const probability = calculateNextSafeProbability();
   return (multiplier * probability) - 1;
+}
+
+function calculateRiskLevel() {
+  const probability = calculateNextSafeProbability() * 100;
+  if (probability >= 80) return { level: 'Low', color: '#00C74D', emoji: '😊' };
+  if (probability >= 60) return { level: 'Medium', color: '#F5A623', emoji: '😐' };
+  if (probability >= 40) return { level: 'High', color: '#FF7A00', emoji: '😰' };
+  if (probability >= 20) return { level: 'Very High', color: '#FF4141', emoji: '😨' };
+  return { level: 'Extreme', color: '#FF0000', emoji: '😱' };
 }
 
 // ==================== UTILITY FUNCTIONS ====================
@@ -297,13 +337,14 @@ function buildMinesOptions() {
   minesSelect.innerHTML = '';
   const maxMines = CONFIG.gridSize * CONFIG.gridSize - 1;
   
-  const commonMines = [3, 5, 10, 15, 20, 24];
+  // Start from 1 mine instead of 3
+  const commonMines = [1, 3, 5, 10, 15, 20, 24];
   
   commonMines.forEach(count => {
     if (count <= maxMines) {
       const opt = document.createElement("option");
       opt.value = count;
-      opt.textContent = `${count} mines`;
+      opt.textContent = `${count} mine${count !== 1 ? 's' : ''}`;
       if (count === CONFIG.defaultMines) opt.selected = true;
       minesSelect.appendChild(opt);
     }
@@ -336,6 +377,7 @@ function buildGrid() {
     tile.innerHTML = `
       <div class="tile-content">
         <div class="tile-number">${i + 1}</div>
+        <div class="tile-mine-count hidden"></div>
       </div>
     `;
     tile.addEventListener("click", () => handleTileClick(i));
@@ -350,11 +392,99 @@ function resetTilesForRound() {
     t.innerHTML = `
       <div class="tile-content">
         <div class="tile-number">${i + 1}</div>
+        <div class="tile-mine-count hidden"></div>
       </div>
     `;
     t.style.animation = '';
     t.style.opacity = '1';
+    t.style.transform = '';
   });
+}
+
+// ==================== NEW FEATURES ====================
+
+function showMineCounts() {
+  if (state.minesCount > 1) return; // Only for 1 mine mode
+  
+  state.tiles.forEach((tile, idx) => {
+    if (tile.classList.contains("revealed-safe")) {
+      const mineCount = document.createElement("div");
+      mineCount.className = "tile-mine-count";
+      mineCount.textContent = "0⚡";
+      tile.querySelector('.tile-content').appendChild(mineCount);
+    }
+  });
+}
+
+function calculateTileRisk(index) {
+  // Calculate how risky a tile is based on proximity to mines
+  if (state.minesIndices.has(index)) return 0;
+  
+  const gridSize = CONFIG.gridSize;
+  const row = Math.floor(index / gridSize);
+  const col = index % gridSize;
+  let mineNeighbors = 0;
+  
+  // Check all 8 directions
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      
+      const newRow = row + dr;
+      const newCol = col + dc;
+      
+      if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+        const neighborIdx = newRow * gridSize + newCol;
+        if (state.minesIndices.has(neighborIdx)) {
+          mineNeighbors++;
+        }
+      }
+    }
+  }
+  
+  return mineNeighbors;
+}
+
+function highlightSafeTiles() {
+  if (!state.inRound || state.revealedSafe === 0) return;
+  
+  const riskLevel = calculateRiskLevel();
+  if (riskLevel.level === 'Extreme') {
+    // Highlight safest tiles when risk is extreme
+    const safeTiles = [];
+    state.tiles.forEach((tile, idx) => {
+      if (!tile.classList.contains("revealed-safe") && 
+          !tile.classList.contains("revealed-mine") &&
+          !state.minesIndices.has(idx)) {
+        safeTiles.push({
+          index: idx,
+          risk: calculateTileRisk(idx)
+        });
+      }
+    });
+    
+    // Sort by lowest risk (fewest mine neighbors)
+    safeTiles.sort((a, b) => a.risk - b.risk);
+    
+    // Highlight top 3 safest tiles
+    safeTiles.slice(0, 3).forEach(tile => {
+      const tileEl = state.tiles[tile.index];
+      tileEl.style.boxShadow = '0 0 15px rgba(0, 199, 77, 0.5)';
+      tileEl.style.border = '2px solid #00C74D';
+    });
+  }
+}
+
+function updateTileNumbers() {
+  if (state.minesCount === 1) {
+    state.tiles.forEach((tile, idx) => {
+      const numberEl = tile.querySelector('.tile-number');
+      if (numberEl) {
+        numberEl.style.opacity = '0.5';
+        numberEl.style.fontSize = '10px';
+      }
+    });
+  }
 }
 
 // ==================== BET AMOUNT CONTROL ====================
@@ -370,6 +500,12 @@ function lockBetControls() {
   
   minesSelect.disabled = true;
   minesSelect.classList.add('disabled');
+  
+  // Disable quick bet buttons
+  document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add('disabled');
+  });
 }
 
 function unlockBetControls() {
@@ -383,6 +519,12 @@ function unlockBetControls() {
   
   minesSelect.disabled = false;
   minesSelect.classList.remove('disabled');
+  
+  // Enable quick bet buttons
+  document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('disabled');
+  });
 }
 
 // ==================== GAME LOGIC ====================
@@ -400,13 +542,14 @@ function startRound() {
     return;
   }
   
-  playSound("click");
+  if (state.soundsEnabled) playSound("click");
   state.inRound = true;
   state.revealedSafe = 0;
   state.minesIndices = new Set();
   state.currentRoundId = Date.now();
   state.canCashout = false;
   state.lockedBetAmount = bet;
+  state.roundStartTime = Date.now();
   
   betBtn.textContent = "Cashout";
   betBtn.disabled = true;
@@ -417,7 +560,7 @@ function startRound() {
   
   resetTilesForRound();
   
-  // Place mines randomly - FIXED: Store positions properly
+  // Place mines randomly
   const totalTiles = CONFIG.gridSize * CONFIG.gridSize;
   const availableIndices = Array.from({ length: totalTiles }, (_, i) => i);
   
@@ -428,9 +571,6 @@ function startRound() {
   }
   
   state.minesIndices = new Set(availableIndices.slice(0, state.minesCount));
-  
-  // DEBUG: Log mine positions (remove in production)
-  console.log("Mine positions:", Array.from(state.minesIndices));
   
   // Deduct bet and update stats
   state.balance -= bet;
@@ -448,11 +588,36 @@ function startRound() {
   updateAdvancedStats();
   updateStatsUI();
   drawStatsChart();
+  updateTileNumbers();
   
-  showNotification(`Round started! Bet: $${formatMoney(bet)} | Mines: ${state.minesCount}`, 'info');
+  showNotification(`Round started! Bet: $${formatMoney(bet)} | ${state.minesCount} mine${state.minesCount !== 1 ? 's' : ''}`, 'info');
 }
 
 function endRound(win, reason = '') {
+  const roundTime = Date.now() - state.roundStartTime;
+  
+  // Update fastest cashout if applicable
+  if (win && state.revealedSafe > 0) {
+    if (!state.stats.fastestCashout || roundTime < state.stats.fastestCashout.time) {
+      state.stats.fastestCashout = {
+        time: roundTime,
+        mines: state.minesCount,
+        multiplier: calculateMultiplier()
+      };
+    }
+  }
+  
+  // Update highest risk win
+  if (win) {
+    const riskLevel = calculateRiskLevel();
+    if (riskLevel.level === 'Extreme' || riskLevel.level === 'Very High') {
+      const profit = (state.lockedBetAmount * calculateMultiplier()) - state.lockedBetAmount;
+      if (profit > state.stats.highestRiskWin) {
+        state.stats.highestRiskWin = profit;
+      }
+    }
+  }
+  
   state.inRound = false;
   betBtn.textContent = "Bet";
   betBtn.disabled = false;
@@ -464,6 +629,8 @@ function endRound(win, reason = '') {
   state.tiles.forEach(t => {
     t.classList.add("disabled");
     t.style.opacity = '0.7';
+    t.style.boxShadow = '';
+    t.style.border = '';
   });
   
   const roundResult = {
@@ -474,13 +641,20 @@ function endRound(win, reason = '') {
     revealed: state.revealedSafe,
     multiplier: calculateMultiplier(),
     profit: win ? (state.lockedBetAmount * calculateMultiplier()) - state.lockedBetAmount : -state.lockedBetAmount,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    duration: roundTime
   };
   
   if (win) {
-    playSound("win");
+    if (state.soundsEnabled) playSound("win");
     if (!reason) reason = 'Cashout';
-    showNotification(`${reason}! Multiplier: ${calculateMultiplier().toFixed(2)}x | Profit: +$${formatMoney(roundResult.profit)}`, 'success', 5000);
+    
+    let emoji = '💰';
+    if (calculateMultiplier() > 5) emoji = '🎉';
+    if (calculateMultiplier() > 10) emoji = '🔥';
+    if (calculateMultiplier() > 20) emoji = '🚀';
+    
+    showNotification(`${emoji} ${reason}! ${calculateMultiplier().toFixed(2)}x | Profit: +$${formatMoney(roundResult.profit)}`, 'success', 5000);
   }
 }
 
@@ -517,7 +691,7 @@ function handleTileClick(index) {
   
   if (state.minesIndices.has(index)) {
     // Hit a mine
-    playSound("mine");
+    if (state.soundsEnabled) playSound("mine");
     tile.classList.add("revealed-mine");
     tile.style.animation = 'mineExplode 0.6s ease-out';
     
@@ -557,11 +731,11 @@ function handleTileClick(index) {
     
     endRound(false, 'Mine hit!');
     
-    showNotification(`Mine hit at ${currentMultiplier.toFixed(2)}x! Loss: -$${formatMoney(lossAmount)}`, 'error', 5000);
+    showNotification(`💥 Mine hit at ${currentMultiplier.toFixed(2)}x! Loss: -$${formatMoney(lossAmount)}`, 'error', 5000);
     
   } else {
     // Safe tile
-    playSound("reveal");
+    if (state.soundsEnabled) playSound("reveal");
     tile.classList.add("revealed-safe");
     tile.style.animation = 'safeReveal 0.4s ease-out';
     
@@ -572,17 +746,22 @@ function handleTileClick(index) {
     
     state.revealedSafe += 1;
     
+    // Show mine count for 1 mine mode
+    if (state.minesCount === 1) {
+      const mineCount = calculateTileRisk(index);
+      if (mineCount > 0) {
+        const countBadge = document.createElement("div");
+        countBadge.className = "tile-mine-count";
+        countBadge.textContent = `${mineCount}⚡`;
+        tile.querySelector('.tile-content').appendChild(countBadge);
+      }
+    }
+    
     const currentMultiplier = calculateMultiplier();
     const probability = calculateNextSafeProbability() * 100;
+    const riskLevel = calculateRiskLevel();
     
-    // Update profit display
-    let riskColor;
-    if (probability >= 70) riskColor = '#00C74D';
-    else if (probability >= 50) riskColor = '#F5A623';
-    else if (probability >= 30) riskColor = '#FF7A00';
-    else riskColor = '#FF4141';
-    
-    profitLabel.innerHTML = `Profit (${currentMultiplier.toFixed(2)}x | <span style="color:${riskColor}">${probability.toFixed(1)}% safe</span>)`;
+    profitLabel.innerHTML = `Profit (${currentMultiplier.toFixed(2)}x | <span style="color:${riskLevel.color}">${riskLevel.emoji} ${probability.toFixed(1)}%</span>)`;
     
     profitAmount.textContent = "$" + formatMoney(state.lockedBetAmount * currentMultiplier);
     
@@ -597,12 +776,15 @@ function handleTileClick(index) {
       time: Date.now()
     });
     
-    // FIXED: Check if all safe tiles have been revealed and auto-cashout
+    // Highlight safe tiles if risk is high
+    highlightSafeTiles();
+    
+    // Check if all safe tiles have been revealed
     const totalSafeTiles = (CONFIG.gridSize * CONFIG.gridSize) - state.minesCount;
     if (state.revealedSafe >= totalSafeTiles) {
       setTimeout(() => {
         if (state.inRound) {
-          cashout(true, 'All gems found!');
+          cashout(true, '🎊 All gems found!');
         }
       }, 500);
     }
@@ -612,11 +794,10 @@ function handleTileClick(index) {
 function randomPick() {
   if (!state.inRound) return;
   
-  playSound("click");
+  if (state.soundsEnabled) playSound("click");
   const totalTiles = CONFIG.gridSize * CONFIG.gridSize;
   const unrevealedIndices = [];
   
-  // Find ALL unrevealed tiles (including mines)
   for (let i = 0; i < totalTiles; i++) {
     const tile = state.tiles[i];
     if (tile.classList.contains("revealed-safe") || tile.classList.contains("revealed-mine")) {
@@ -630,19 +811,12 @@ function randomPick() {
     return;
   }
   
-  // Pick 3 RANDOM tiles (could be mines or gems)
   const picks = Math.min(3, unrevealedIndices.length);
-  
-  // Shuffle all unrevealed indices
   const shuffled = [...unrevealedIndices].sort(() => Math.random() - 0.5);
   
-  showNotification(`Randomly picking ${picks} tiles (risky!)`, 'warning', 2000);
+  showNotification(`🎲 Randomly picking ${picks} tiles (risky!)`, 'warning', 2000);
   
-  // Pick tiles with risk
-  let pickedIndices = shuffled.slice(0, picks);
-  
-  // Process picks sequentially
-  pickedIndices.forEach((idx, i) => {
+  shuffled.slice(0, picks).forEach((idx, i) => {
     setTimeout(() => {
       handleTileClick(idx);
     }, i * 400);
@@ -652,7 +826,8 @@ function randomPick() {
 function updateProfitPreview() {
   if (!state.inRound) {
     const probability = ((CONFIG.gridSize * CONFIG.gridSize - state.minesCount) / (CONFIG.gridSize * CONFIG.gridSize)) * 100;
-    profitLabel.textContent = `Profit (1.00x | ${probability.toFixed(1)}% initial safety)`;
+    const riskLevel = calculateRiskLevel();
+    profitLabel.innerHTML = `Profit (1.00x | <span style="color:${riskLevel.color}">${riskLevel.emoji} ${probability.toFixed(1)}% initial</span>)`;
     profitAmount.textContent = "$" + formatMoney(state.betAmount);
     return;
   }
@@ -660,14 +835,9 @@ function updateProfitPreview() {
   const multiplier = calculateMultiplier();
   const payout = state.lockedBetAmount * multiplier;
   const probability = calculateNextSafeProbability() * 100;
+  const riskLevel = calculateRiskLevel();
   
-  let riskColor;
-  if (probability >= 70) riskColor = '#00C74D';
-  else if (probability >= 50) riskColor = '#F5A623';
-  else if (probability >= 30) riskColor = '#FF7A00';
-  else riskColor = '#FF4141';
-  
-  profitLabel.innerHTML = `Profit (${multiplier.toFixed(2)}x | <span style="color:${riskColor}">${probability.toFixed(1)}% safe</span>)`;
+  profitLabel.innerHTML = `Profit (${multiplier.toFixed(2)}x | <span style="color:${riskLevel.color}">${riskLevel.emoji} ${probability.toFixed(1)}%</span>)`;
   profitAmount.textContent = "$" + formatMoney(payout);
 }
 
@@ -721,7 +891,7 @@ function cashout(auto = false, reason = '') {
   
   const cashoutMessage = auto ? 
     `${reason} at ${multiplier.toFixed(2)}x` : 
-    `Cashed out at ${multiplier.toFixed(2)}x`;
+    `💸 Cashed out at ${multiplier.toFixed(2)}x`;
   
   showNotification(
     `${cashoutMessage}<br>Payout: $${formatMoney(payout)} | Profit: +$${formatMoney(profit)}`,
@@ -741,8 +911,13 @@ function updateAdvancedStats() {
   const minutes = Math.floor((sessionTime % (1000 * 60 * 60)) / (1000 * 60));
   
   const avgBet = totalGames > 0 ? state.stats.wagered / totalGames : 0;
-  
   const expectedValue = calculateExpectedValue();
+  
+  const fastestCashoutText = state.stats.fastestCashout ? 
+    `${(state.stats.fastestCashout.time / 1000).toFixed(2)}s` : 'N/A';
+  
+  const highestRiskWinText = state.stats.highestRiskWin > 0 ? 
+    `+$${formatMoney(state.stats.highestRiskWin)}` : 'N/A';
   
   statsAdvancedContainer.innerHTML = `
     <div class="stats-advanced-grid">
@@ -759,12 +934,12 @@ function updateAdvancedStats() {
       <div class="stats-advanced-card">
         <div class="stats-advanced-label">Biggest Win</div>
         <div class="stats-advanced-value positive">+$${formatMoney(state.stats.biggestWin)}</div>
-        <div class="stats-advanced-sub">Biggest Loss: -$${formatMoney(state.stats.biggestLoss)}</div>
+        <div class="stats-advanced-sub">Risk Win: ${highestRiskWinText}</div>
       </div>
       <div class="stats-advanced-card">
         <div class="stats-advanced-label">Avg Bet</div>
         <div class="stats-advanced-value">$${formatMoney(avgBet)}</div>
-        <div class="stats-advanced-sub">Session: ${hours}h ${minutes}m</div>
+        <div class="stats-advanced-sub">Fastest: ${fastestCashoutText}</div>
       </div>
       <div class="stats-advanced-card">
         <div class="stats-advanced-label">Current Streak</div>
@@ -774,7 +949,7 @@ function updateAdvancedStats() {
       <div class="stats-advanced-card">
         <div class="stats-advanced-label">Total Rounds</div>
         <div class="stats-advanced-value">${state.stats.totalRounds}</div>
-        <div class="stats-advanced-sub">Wagered: $${formatMoney(state.stats.wagered)}</div>
+        <div class="stats-advanced-sub">Session: ${hours}h ${minutes}m</div>
       </div>
     </div>
   `;
@@ -877,6 +1052,139 @@ function drawStatsChart() {
   }
 }
 
+// ==================== MENU SYSTEM ====================
+
+function toggleMenu() {
+  menuPanel.classList.toggle('hidden');
+  if (state.soundsEnabled) playSound("click");
+}
+
+function setupMenu() {
+  menuBtn.addEventListener('click', toggleMenu);
+  
+  document.querySelector('.menu-close').addEventListener('click', () => {
+    menuPanel.classList.add('hidden');
+  });
+  
+// Game card clicks
+document.querySelectorAll('.game-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const game = card.dataset.game;
+    
+    if (game === 'mines') {
+      // Already on Mines, do nothing
+      return;
+    }
+    
+    if (game === 'plinko') {
+      // Open Plinko in new tab
+      window.open('https://plinko-web-game.netlify.app/', '_blank');
+      return;
+    }
+    
+    // For other games, show coming soon
+    showNotification(`🎮 ${card.querySelector('h4').textContent} coming soon!`, 'info', 3000);
+    
+    // Update active card (only for games that stay in same app)
+    document.querySelectorAll('.game-card').forEach(c => {
+      c.classList.remove('active');
+      const badge = c.querySelector('.game-badge');
+      if (c.dataset.game === 'mines') {
+        badge.textContent = 'Available';
+        badge.classList.remove('active');
+      }
+    });
+    
+    card.classList.add('active');
+    const badge = card.querySelector('.game-badge');
+    badge.textContent = 'Selected';
+    badge.classList.add('active');
+  });
+});
+  // Toggle sounds
+  document.getElementById('toggle-sounds').addEventListener('click', () => {
+    state.soundsEnabled = !state.soundsEnabled;
+    const btn = document.getElementById('toggle-sounds');
+    btn.textContent = state.soundsEnabled ? '🔇 Sounds Off' : '🔊 Sounds On';
+    showNotification(state.soundsEnabled ? 'Sounds enabled' : 'Sounds disabled', 'info');
+  });
+  
+  // Reset stats from menu
+  document.getElementById('reset-stats').addEventListener('click', () => {
+    if (confirm("Reset all statistics? This cannot be undone.")) {
+      state.stats = {
+        profit: 0,
+        wagered: 0,
+        wins: 0,
+        losses: 0,
+        history: [],
+        highestMultiplier: 0,
+        totalRounds: 0,
+        bestProfitStreak: 0,
+        currentStreak: 0,
+        biggestWin: 0,
+        biggestLoss: 0,
+        totalPlayTime: 0,
+        sessionStartTime: Date.now(),
+        fastestCashout: null,
+        highestRiskWin: 0
+      };
+      updateAdvancedStats();
+      updateStatsUI();
+      drawStatsChart();
+      showNotification('Statistics reset', 'info', 2000);
+    }
+  });
+  
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!menuPanel.contains(e.target) && !menuBtn.contains(e.target)) {
+      menuPanel.classList.add('hidden');
+    }
+  });
+}
+
+// ==================== HOTKEYS ====================
+
+function setupHotkeys() {
+  document.addEventListener('keydown', (e) => {
+    if (!state.hotkeysEnabled) return;
+    
+    switch(e.key.toLowerCase()) {
+      case ' ':
+        e.preventDefault();
+        if (!state.inRound) {
+          startRound();
+        } else if (state.canCashout) {
+          cashout(false);
+        }
+        break;
+        
+      case 'r':
+        if (state.inRound && !randomBtn.disabled) {
+          e.preventDefault();
+          randomPick();
+        }
+        break;
+        
+      case 'm':
+        e.preventDefault();
+        toggleMenu();
+        break;
+        
+      case '½':
+      case '2':
+        if (!state.inRound) {
+          e.preventDefault();
+          const action = e.key === '½' ? 'half' : 'double';
+          const btn = document.querySelector(`[data-bet-action="${action}"]`);
+          if (btn) btn.click();
+        }
+        break;
+    }
+  });
+}
+
 // ==================== EVENT HANDLERS ====================
 
 function onBetInputChange() {
@@ -921,12 +1229,12 @@ function attachEvents() {
       return;
     }
     
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     state.minesCount = parseInt(minesSelect.value, 10) || CONFIG.defaultMines;
     updateGems();
     updateProfitPreview();
     
-    showNotification(`Mines set to ${state.minesCount}`, 'info', 2000);
+    showNotification(`💣 Mines set to ${state.minesCount}`, 'info', 2000);
   });
   
   betActionButtons.forEach(btn => {
@@ -936,7 +1244,7 @@ function attachEvents() {
         return;
       }
       
-      playSound("click");
+      if (state.soundsEnabled) playSound("click");
       let bet = state.betAmount;
       
       if (btn.dataset.betAction === "half") bet /= 2;
@@ -944,7 +1252,6 @@ function attachEvents() {
       
       bet = Math.max(CONFIG.minBet, parseFloat(bet.toFixed(2)));
       
-      // Check if new bet exceeds balance
       if (bet > state.balance) {
         bet = Math.min(state.balance, CONFIG.maxBet);
         showNotification(`Bet cannot exceed balance of $${formatMoney(state.balance)}`, 'warning');
@@ -955,54 +1262,78 @@ function attachEvents() {
       updateBetPreview();
       updateProfitPreview();
       
-      showNotification(`Bet set to $${formatMoney(bet)}`, 'info', 1500);
+      showNotification(`🎯 Bet set to $${formatMoney(bet)}`, 'info', 1500);
+    });
+  });
+  
+  // Quick bet buttons
+  document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.inRound) {
+        showNotification('Cannot change bet during a round', 'warning');
+        return;
+      }
+      
+      const bet = parseFloat(btn.dataset.bet);
+      if (bet > state.balance) {
+        showNotification(`Bet cannot exceed balance of $${formatMoney(state.balance)}`, 'warning');
+        return;
+      }
+      
+      state.betAmount = bet;
+      betInput.value = bet.toFixed(2);
+      updateBetPreview();
+      updateProfitPreview();
+      
+      if (state.soundsEnabled) playSound("click");
+      showNotification(`⚡ Quick bet: $${formatMoney(bet)}`, 'info', 1500);
     });
   });
   
   tabButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       if (btn.classList.contains("active")) return;
-      playSound("click");
+      if (state.soundsEnabled) playSound("click");
       tabButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       autoInfo.classList.toggle("hidden", btn.dataset.tab !== "auto");
       
       if (btn.dataset.tab === "auto") {
-        showNotification("Auto mode is visual only in this demo", 'info', 3000);
+        showNotification("🤖 Auto mode is visual only in this demo", 'info', 3000);
       }
     });
   });
   
   addBtn.addEventListener("click", e => {
     e.stopPropagation();
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     addPopup.classList.toggle("hidden");
   });
   
   addQuickButtons.forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      playSound("click");
+      if (state.soundsEnabled) playSound("click");
       const amt = parseFloat(btn.dataset.add);
       if (!isNaN(amt) && amt > 0) {
         state.balance += amt;
         updateBalanceUI();
         addPopup.classList.add("hidden");
-        showNotification(`Added $${formatMoney(amt)} to balance`, 'success', 2000);
+        showNotification(`💰 Added $${formatMoney(amt)} to balance`, 'success', 2000);
       }
     });
   });
   
   addCustomBtn.addEventListener("click", e => {
     e.stopPropagation();
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     const v = parseFloat(addCustomInput.value);
     if (!isNaN(v) && v > 0) {
       state.balance += v;
       updateBalanceUI();
       addCustomInput.value = "";
       addPopup.classList.add("hidden");
-      showNotification(`Added $${formatMoney(v)} to balance`, 'success', 2000);
+      showNotification(`💰 Added $${formatMoney(v)} to balance`, 'success', 2000);
     } else {
       showNotification('Please enter a valid amount', 'error', 2000);
     }
@@ -1017,19 +1348,19 @@ function attachEvents() {
   });
   
   statsClose.addEventListener("click", () => {
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     statsPanel.classList.add("hidden");
     statsOpen.classList.remove("hidden");
   });
   
   statsOpen.addEventListener("click", () => {
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     statsPanel.classList.remove("hidden");
     statsOpen.classList.add("hidden");
   });
   
   statsRefresh.addEventListener("click", () => {
-    playSound("click");
+    if (state.soundsEnabled) playSound("click");
     if (confirm("Reset all statistics? This cannot be undone.")) {
       state.stats = {
         profit: 0,
@@ -1044,7 +1375,9 @@ function attachEvents() {
         biggestWin: 0,
         biggestLoss: 0,
         totalPlayTime: 0,
-        sessionStartTime: Date.now()
+        sessionStartTime: Date.now(),
+        fastestCashout: null,
+        highestRiskWin: 0
       };
       updateAdvancedStats();
       updateStatsUI();
@@ -1052,6 +1385,10 @@ function attachEvents() {
       showNotification('Statistics reset', 'info', 2000);
     }
   });
+  
+  // Setup menu and hotkeys
+  setupMenu();
+  setupHotkeys();
 }
 
 // ==================== INITIALIZATION ====================
@@ -1073,111 +1410,7 @@ function init() {
   drawStatsChart();
   attachEvents();
   
-  // Add CSS for enhanced features
-  const enhancedCSS = `
-  ${notificationCSS}
-  
-  @keyframes mineExplode {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes mineReveal {
-    0% { transform: scale(0.8); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes safeReveal {
-    0% { transform: scale(0.9); opacity: 0.5; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  .tile-content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .tile-number {
-    font-size: 11px;
-    color: rgba(167, 179, 195, 0.3);
-    font-weight: 600;
-  }
-  
-  .grid-tile.revealed-safe .tile-number,
-  .grid-tile.revealed-mine .tile-number {
-    display: none;
-  }
-  
-  .btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .stats-advanced {
-    margin-top: 15px;
-  }
-  
-  .stats-advanced-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  
-  .stats-advanced-card {
-    background: #0C1824;
-    border: 1px solid #1A2C3D;
-    border-radius: 6px;
-    padding: 8px;
-  }
-  
-  .stats-advanced-label {
-    font-size: 10px;
-    color: #A7B3C3;
-    margin-bottom: 2px;
-  }
-  
-  .stats-advanced-value {
-    font-size: 12px;
-    font-weight: 600;
-    color: #FFFFFF;
-  }
-  
-  .stats-advanced-value.positive {
-    color: #00C74D;
-  }
-  
-  .stats-advanced-value.negative {
-    color: #FF4141;
-  }
-  
-  .stats-advanced-sub {
-    font-size: 9px;
-    color: #A7B3C3;
-    margin-top: 2px;
-  }
-  
-  #bet-input.disabled,
-  .select-input.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: #0a131f;
-  }
-  
-  .bet-input-wrap.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .btn.mini.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  `;
-  
+
   const styleSheet = document.createElement("style");
   styleSheet.textContent = enhancedCSS;
   document.head.appendChild(styleSheet);

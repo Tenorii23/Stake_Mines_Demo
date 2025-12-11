@@ -608,3 +608,333 @@ body {
     padding-inline: 16px;
   }
 }
+  @keyframes mineExplode {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes mineReveal {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes safeReveal {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .tile-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  
+  .tile-number {
+    font-size: 11px;
+    color: rgba(167, 179, 195, 0.3);
+    font-weight: 600;
+  }
+  
+  .tile-mine-count {
+    font-size: 10px;
+    color: rgba(255, 65, 65, 0.8);
+    margin-top: 2px;
+  }
+  
+  .grid-tile.revealed-safe .tile-number,
+  .grid-tile.revealed-mine .tile-number {
+    display: none;
+  }
+  
+  .btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .stats-advanced {
+    margin-top: 15px;
+  }
+  
+  .stats-advanced-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .stats-advanced-card {
+    background: #0C1824;
+    border: 1px solid #1A2C3D;
+    border-radius: 6px;
+    padding: 8px;
+  }
+  
+  .stats-advanced-label {
+    font-size: 10px;
+    color: #A7B3C3;
+    margin-bottom: 2px;
+  }
+  
+  .stats-advanced-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #FFFFFF;
+  }
+  
+  .stats-advanced-value.positive {
+    color: #00C74D;
+  }
+  
+  .stats-advanced-value.negative {
+    color: #FF4141;
+  }
+  
+  .stats-advanced-sub {
+    font-size: 9px;
+    color: #A7B3C3;
+    margin-top: 2px;
+  }
+  
+  #bet-input.disabled,
+  .select-input.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #0a131f;
+  }
+  
+  .bet-input-wrap.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn.mini.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Menu Styles */
+  .menu-btn {
+    background: transparent;
+    border: 1px solid #1A2C3D;
+    color: #A7B3C3;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  
+  .menu-btn:hover {
+    background: #1A2C3D;
+    color: #FFFFFF;
+  }
+  
+  .menu-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 100vh;
+    background: #132439;
+    border-right: 1px solid #1A2C3D;
+    z-index: 1001;
+    overflow-y: auto;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+  }
+  
+  .menu-header {
+    padding: 20px;
+    border-bottom: 1px solid #1A2C3D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .menu-header h3 {
+    margin: 0;
+    color: #FFFFFF;
+    font-size: 16px;
+  }
+  
+  .menu-close {
+    background: transparent;
+    border: none;
+    color: #A7B3C3;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .menu-close:hover {
+    color: #FFFFFF;
+  }
+  
+  .menu-games {
+    padding: 15px;
+  }
+  
+  .game-card {
+    background: #0C1824;
+    border: 1px solid #1A2C3D;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .game-card:hover {
+    background: #1A2C3D;
+    transform: translateY(-2px);
+  }
+  
+  .game-card.active {
+    border-color: #00C74D;
+    background: rgba(0, 199, 77, 0.1);
+  }
+  
+  .game-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1A2C3D;
+    border-radius: 8px;
+  }
+  
+  .game-info {
+    flex: 1;
+  }
+  
+  .game-info h4 {
+    margin: 0 0 4px 0;
+    color: #FFFFFF;
+    font-size: 14px;
+  }
+  
+  .game-info p {
+    margin: 0;
+    color: #A7B3C3;
+    font-size: 11px;
+  }
+  
+  .game-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: #1A2C3D;
+    color: #A7B3C3;
+    border-radius: 999px;
+  }
+  
+  .game-badge.active {
+    background: #00C74D;
+    color: #000;
+  }
+  
+  .menu-footer {
+    padding: 15px;
+    border-top: 1px solid #1A2C3D;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn.small {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  /* Quick Bets */
+  .quick-bets {
+    margin-bottom: 12px;
+  }
+  
+  .quick-bets-label {
+    font-size: 12px;
+    color: #A7B3C3;
+    margin-bottom: 6px;
+  }
+  
+  .quick-bets-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .quick-bet-btn {
+    flex: 1;
+    background: #1A2C3D;
+    border: 1px solid #1A2C3D;
+    color: #A7B3C3;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+    min-width: 50px;
+  }
+  
+  .quick-bet-btn:hover:not(.disabled) {
+    background: #223649;
+    color: #FFFFFF;
+  }
+  
+  .quick-bet-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Hotkeys */
+  .hotkeys-info {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #1A2C3D;
+  }
+  
+  .hotkeys-title {
+    font-size: 11px;
+    color: #A7B3C3;
+    margin-bottom: 6px;
+  }
+  
+  .hotkeys-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .hotkey-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .hotkey-item kbd {
+    background: #1A2C3D;
+    color: #A7B3C3;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: monospace;
+  }
+  
+  .hotkey-item span {
+    font-size: 10px;
+    color: #A7B3C3;
+  }
