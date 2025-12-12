@@ -77,7 +77,7 @@ document.querySelector('.stats-body').appendChild(statsAdvancedContainer);
 const menuBtn = document.createElement("button");
 menuBtn.className = "menu-btn";
 menuBtn.innerHTML = "🎮 Menu";
-document.querySelector('.top-nav-left').appendChild(menuBtn);
+document.querySelector(".top-nav-left").appendChild(menuBtn);
 
 const menuPanel = document.createElement("div");
 menuPanel.className = "menu-panel hidden";
@@ -86,8 +86,9 @@ menuPanel.innerHTML = `
     <h3>Demo Games</h3>
     <button class="menu-close">&times;</button>
   </div>
+
   <div class="menu-games">
-    <div class="game-card" data-game="mines" data-active="true">
+    <div class="game-card active" data-game="mines">
       <div class="game-icon">💣</div>
       <div class="game-info">
         <h4>Mines</h4>
@@ -95,30 +96,34 @@ menuPanel.innerHTML = `
       </div>
       <div class="game-badge active">Playing</div>
     </div>
-<div class="game-card" data-game="plinko">
-  <div class="game-icon">🎯</div>
-  <div class="game-info">
-    <h4>Plinko</h4>
-    <p>Drop balls for multipliers</p>
-  </div>
-  <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
-</div>
-<div class="game-card" data-game="crash">
-  <div class="game-icon">🚀</div>
-  <div class="game-info">
-    <h4>Crash</h4>
-    <p>Cash out before it crashes</p>
-  </div>
-  <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
-</div>
-    <div class="game-card" data-game="limbo" data-active="true">
+
+    <div class="game-card" data-game="plinko">
+      <div class="game-icon">🎯</div>
+      <div class="game-info">
+        <h4>Plinko</h4>
+        <p>Drop balls for multipliers</p>
+      </div>
+      <div class="game-badge" style="background:#00C74D;color:#000;">Play Now!</div>
+    </div>
+
+    <div class="game-card" data-game="crash">
+      <div class="game-icon">🚀</div>
+      <div class="game-info">
+        <h4>Crash</h4>
+        <p>Cash out before it crashes</p>
+      </div>
+      <div class="game-badge" style="background:#00C74D;color:#000;">Play Now!</div>
+    </div>
+
+    <div class="game-card" data-game="limbo">
       <div class="game-icon">🎯</div>
       <div class="game-info">
         <h4>Limbo</h4>
         <p>Instant multiplier game</p>
       </div>
-  <div class="game-badge" style="background: #00C74D; color: #000;">Play Now!</div>
+      <div class="game-badge" style="background:#00C74D;color:#000;">Play Now!</div>
     </div>
+
     <div class="game-card" data-game="dice">
       <div class="game-icon">🎲</div>
       <div class="game-info">
@@ -127,6 +132,7 @@ menuPanel.innerHTML = `
       </div>
       <div class="game-badge">Coming Soon</div>
     </div>
+
     <div class="game-card" data-game="roulette">
       <div class="game-icon">🎡</div>
       <div class="game-info">
@@ -135,6 +141,7 @@ menuPanel.innerHTML = `
       </div>
       <div class="game-badge">Coming Soon</div>
     </div>
+
     <div class="game-card" data-game="blackjack">
       <div class="game-icon">♠️</div>
       <div class="game-info">
@@ -144,6 +151,7 @@ menuPanel.innerHTML = `
       <div class="game-badge">Coming Soon</div>
     </div>
   </div>
+
   <div class="menu-footer">
     <button class="btn dark small" id="toggle-sounds">🔇 Sounds Off</button>
     <button class="btn dark small" id="reset-stats">Reset Stats</button>
@@ -1063,79 +1071,59 @@ function drawStatsChart() {
 // ==================== MENU SYSTEM ====================
 
 function toggleMenu() {
-  menuPanel.classList.toggle('hidden');
+  menuPanel.classList.toggle("hidden");
   if (state.soundsEnabled) playSound("click");
 }
 
 function setupMenu() {
-  menuBtn.addEventListener('click', toggleMenu);
-  
-  document.querySelector('.menu-close').addEventListener('click', () => {
-    menuPanel.classList.add('hidden');
+  menuBtn.addEventListener("click", toggleMenu);
+
+  menuPanel.querySelector(".menu-close").addEventListener("click", () => {
+    menuPanel.classList.add("hidden");
   });
-  
-// Game card clicks
-document.querySelectorAll('.game-card').forEach(card => {
-  card.addEventListener('click', () => {
-    const game = card.dataset.game;
-    
-    if (game === 'mines') {
-      // Already on Mines, do nothing
-      return;
-    }
-    
-    if (game === 'plinko') {
-      // Open Plinko in new tab
-      window.open('https://plinko-web-game.netlify.app/', '_blank');
-      return;
-    }
 
+  menuPanel.querySelectorAll(".game-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const game = card.dataset.game;
 
+      // Already on Mines
+      if (game === "mines") return;
 
-        if (game === 'crash') {
-      // Open Plinko in new tab
-      window.open('https://tenorii23.github.io/Stake_Crash_Demo/', '_blank');
-      return;
-    }
-    
-
-          if (game === 'Limbo') {
-      // Open Plinko in new tab
-      window.open('https://tenorii23.github.io/Stake_Limbo_Demo/', '_blank');
-      return;
-    }
-
-
-
-    // For other games, show coming soon
-    showNotification(`🎮 ${card.querySelector('h4').textContent} coming soon!`, 'info', 3000);
-    
-    // Update active card (only for games that stay in same app)
-    document.querySelectorAll('.game-card').forEach(c => {
-      c.classList.remove('active');
-      const badge = c.querySelector('.game-badge');
-      if (c.dataset.game === 'mines') {
-        badge.textContent = 'Available';
-        badge.classList.remove('active');
+      if (game === "plinko") {
+        window.open("https://plinko-web-game.netlify.app/", "_blank");
+        return;
       }
+
+      if (game === "crash") {
+        window.location.href = "https://tenorii23.github.io/Stake_Crash_Demo/";
+        return;
+      }
+
+      if (game === "limbo") {
+        window.location.href = "https://tenorii23.github.io/Stake_Limbo_Demo/";
+        return;
+      }
+
+      showNotification(
+        `🎮 ${card.querySelector("h4").textContent} coming soon!`,
+        "info",
+        3000
+      );
     });
-    
-    card.classList.add('active');
-    const badge = card.querySelector('.game-badge');
-    badge.textContent = 'Selected';
-    badge.classList.add('active');
   });
-});
-  // Toggle sounds
-  document.getElementById('toggle-sounds').addEventListener('click', () => {
+
+  document.getElementById("toggle-sounds").addEventListener("click", () => {
     state.soundsEnabled = !state.soundsEnabled;
-    const btn = document.getElementById('toggle-sounds');
-    btn.textContent = state.soundsEnabled ? '🔇 Sounds Off' : '🔊 Sounds On';
-    showNotification(state.soundsEnabled ? 'Sounds enabled' : 'Sounds disabled', 'info');
+    const btn = document.getElementById("toggle-sounds");
+    btn.textContent = state.soundsEnabled ? "🔇 Sounds Off" : "🔊 Sounds On";
+    showNotification(
+      state.soundsEnabled ? "Sounds enabled" : "Sounds disabled",
+      "info",
+      1500
+    );
   });
-  
-  // Reset stats from menu
-  document.getElementById('reset-stats').addEventListener('click', () => {
+
+  document.getElementById("reset-stats").addEventListener("click", () => {
     if (confirm("Reset all statistics? This cannot be undone.")) {
       state.stats = {
         profit: 0,
@@ -1157,17 +1145,17 @@ document.querySelectorAll('.game-card').forEach(card => {
       updateAdvancedStats();
       updateStatsUI();
       drawStatsChart();
-      showNotification('Statistics reset', 'info', 2000);
+      showNotification("Statistics reset", "info", 2000);
     }
   });
-  
-  // Close menu when clicking outside
-  document.addEventListener('click', (e) => {
+
+  document.addEventListener("click", e => {
     if (!menuPanel.contains(e.target) && !menuBtn.contains(e.target)) {
-      menuPanel.classList.add('hidden');
+      menuPanel.classList.add("hidden");
     }
   });
 }
+
 
 // ==================== HOTKEYS ====================
 
